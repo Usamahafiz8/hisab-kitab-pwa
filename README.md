@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# hisab-kitab-pwa
 
-## Getting Started
+**Hisab Kitab (حساب کتاب)** — a smart business ledger as an installable Progressive Web App.
+A full Next.js port of the Hisab Kitab React Native app: track what customers owe you and what you
+owe suppliers, in English, Urdu and Pashto. Works offline; all data stays on the device.
 
-First, run the development server:
+## Features
+
+- **PIN lock** — 4-digit PIN on launch (stored as a salted SHA-256 hash), change PIN, forgot-PIN reset, logout
+- **Books (khata)** — multiple businesses, each with its own contacts; create / edit / delete (long-press or right-click)
+- **Ledger** — customers & suppliers with You Gave (Dr) / You Got (Cr) / balance totals, tabs, search, date-range filter
+- **Contact ledger** — entries with running balance, built-in calculator (+ − × ÷, keyboard supported), date & time,
+  notes, due-date reminders, entry details, edit / delete
+- **PDF reports** — contact statement and book summary report (bilingual, RTL for Urdu/Pashto); shared via the
+  phone's share sheet or downloaded on desktop
+- **Backup** — export a book as `{book}_hisab.json` and import/merge it (no duplicates). Same format as the
+  mobile app, so backups move between the phone app and the PWA
+- **Notifications** — entry confirmations, due-date reminders and a 9 AM daily summary
+- **Settings** — language, dark / light theme, "You Get" colour (red/green), text size, install app
+
+## How it works
+
+- Next.js 16 App Router, exported as a static site (`output: 'export'`) — no server needed
+- Data in IndexedDB (`src/lib/db.ts`, `src/lib/repo.ts`) — a port of the app's SQLite schema
+- `public/sw.js` — offline cache for the app shell and the reminder checker. Reminders fire while the app is open,
+  and in the background on Chromium-based browsers via Periodic Background Sync (installed app only)
+- PDFs are rendered in the browser with `html2pdf.js`
+
+## Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000 (service worker disabled in dev)
+npm run build      # static site in ./out
+npm run preview    # serve ./out on http://localhost:3100
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deploy the `out/` folder to any static host (Vercel, Netlify, GitHub Pages, Cloudflare Pages, nginx…).
+It must be served over HTTPS (or localhost) for install, offline mode and notifications to work.
