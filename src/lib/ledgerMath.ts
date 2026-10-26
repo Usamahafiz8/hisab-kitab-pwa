@@ -18,15 +18,25 @@ export function signedBalance(amount: number, type: 'dr' | 'cr'): number {
   return type === 'dr' ? amount : -amount;
 }
 
+// Entry timestamp in ms; created_at is ISO, or SQLite's "YYYY-MM-DD HH:MM:SS" (UTC, no 'Z') from mobile backups.
+function entryTime(createdAt?: string): number {
+  if (!createdAt) return 0;
+  const ms = Date.parse(createdAt.includes('T') ? createdAt : createdAt.replace(' ', 'T') + 'Z');
+  return isNaN(ms) ? 0 : ms;
+}
+
 // Attach a running_balance to each transaction in chronological order.
-// Input can be in any order; output is sorted date ASC, id ASC.
-export function withRunningBalances<T extends { date: string; id: number; debit: number; credit: number }>(
+// Input can be in any order; output is sorted date ASC, then time of day
+// (created_at) ASC, then id ASC — so a 9:53 PM entry comes after 9:50 PM on the
+// same day even if it was added first.
+export function withRunningBalances<T extends { date: string; id: number; debit: number; credit: number; created_at?: string }>(
   transactions: T[],
   openingBalance: number,
   openingType: 'dr' | 'cr',
 ): Array<T & { running_balance: number }> {
   const sorted = [...transactions].sort((a, b) =>
-    a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id,
+    a.date < b.date ? -1 : a.date > b.date ? 1
+      : (entryTime(a.created_at) - entryTime(b.created_at)) || a.id - b.id,
   );
   let bal = signedBalance(openingBalance, openingType);
   return sorted.map(t => {
